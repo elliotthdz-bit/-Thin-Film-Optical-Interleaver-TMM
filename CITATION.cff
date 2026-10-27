@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it."
+type: software
+title: "Thin-Film Optical Interleaver: Complex-Index TMM Simulation"
+authors:
+  - family-names: "Hernández Martín"
+    given-names: "Elliott"
+version: 1.0.0
