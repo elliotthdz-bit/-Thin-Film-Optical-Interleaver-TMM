@@ -1,0 +1,916 @@
+clear;
+
+# ============================================================
+# INTERLEAVER MULTICAVIDAD EN STACK
+# Ahora el numero de cavidades se controla con:
+# num_cavities = 1,2,3,4,5,6,7,8
+#
+# Estructura general:
+# M X1 M X2 M X3 ... M XN M
+# donde M = (AB)^2
+# y Xk alterna D, C, D, C... si pattern_mode = 1
+# ============================================================
+
+# ------------------------------------------------------------
+# 1) CONFIGURACION GENERAL
+# ------------------------------------------------------------
+lambda0 = 1550e-9;
+lambda  = linspace(1514.4e-9,1584.8e-9,100001);
+f       = c/lambda;
+theta   = 0;
+
+# ------------------------------------------------------------
+# 2) SWITCH DE DISENO
+# ------------------------------------------------------------
+num_cavities = 3;   # <<<<<< CAMBIAR AQUI: 1,2,3,4,5,6,7,8
+
+# start_with_D = 1  -> D, C, D, C, ...
+# start_with_D = 0  -> C, D, C, D, ...
+start_with_D = 1;
+
+# pattern_mode:
+# 1 = alternado D/C/D/C...
+# 2 = todas las cavidades tipo D
+# 3 = todas las cavidades tipo C
+pattern_mode = 1;
+
+# Limite de seguridad
+if (num_cavities < 1) {
+    num_cavities = 1;
+}
+if (num_cavities > 8) {
+    num_cavities = 8;
+}
+
+# ------------------------------------------------------------
+# 3) ACTIVAR O DESACTIVAR ABSORCION  1 PA SÍ, LO QUE SEA PA NO 
+# ------------------------------------------------------------
+use_loss = 1;
+ii = sqrt(-1);
+
+# ------------------------------------------------------------
+# 4) INDICES DE REFRACCION
+# ------------------------------------------------------------
+if (use_loss == 1) {
+    nA = 2.0436 + ii*2.32e-29;    # Ta2O5 #0.2             NUEVO InGaAsP n=3.2515,k=0.00806       SiN no estequiométrico 2.01
+    nB = 2.2 + ii*5.87e-45;      # TiO2   2.857   2.21      NUEVO GaAs   n=3.3684,k=0.0000001    2.875   SCHOTT IRG 23: 2.8589 PERO NO INCLUYE K,  SCHOTT IRG 26:2.84+ii*5.1737e-7
+    nC = 1 + ii*0;       #1.4e-9 Si                 SE QUEDÓ IGUAL
+    nD = 1 + ii*0;  # SiO2               NUEVO Al2O3  n=1.6345,k=3.0113e-317
+} else {
+nA = 2.0573;   #0.2,   aunque aumentar el índice de los espejos aumenta la amplitud reflejada, en ciertos intervalos se pierde la simetría
+   nB = 2.2808; 
+    nC = 1; 
+    nD = 1.444;   #nD inversamente proporcional a la magnitud del pulso reflejado
+}
+
+
+
+#    nA = 2.0573 + ii*0.0028388;    # Ta2O5 #0.2
+#   nB = 2.2808 + ii*0.00001;      # TiO2
+#    nC = 3.434  + ii*1.4e-9;       # Si
+#    nD = 1.444  + ii*0.000011139;  # SiO2
+
+
+# ------------------------------------------------------------
+# 5) MEDIOS EXTERNOS
+# ------------------------------------------------------------
+n_in  = 1.0;
+n_out = 1.0;
+
+# ------------------------------------------------------------
+# 6) ESPESORES
+# ------------------------------------------------------------
+# A y B: cuarto de onda a 1550 nm
+
+dA = 387.5e-9;   #  100+287.5=387.5nm*2=  750nm          MIENTRAS LAS SUMAS DE AMBOS ESPEJOS DEN 1/4 Ó 1/2 DE LAMBDA TODO BIEN, TAMBIÉN EL GROSOR DE LOS ESPEJOS AFECTA EL FSR
+dB = 387.5e-9;   #  750nm       CHECAR SI ESTOS ESPESORES SON FABRICABLES
+
+# ENCONTRADOS POR BARRIDOS
+dC = 202e-9;    # 137 nm , 112.84nm, ,124nm  155 el tamaño de la capa C afecta proporcioanlmente la amplitud de como se reflectan los pulsos, y al igual que el índice de los reflectores, al aumentarlo mucho pierden simetría 
+dD =  12007.5e-6;   #8496.47e-6, 11.99e-3/2/2/2/2 para 1.6,  156.18 um , 1038.52 um logramos reducir el fsr proporcionalmente con el tamaño de la cavidad pero tamb 
+#5566.52, 7166.52e-6 para 0.1nm/12.5Ghz, 3666.52e-6 para 0.2nm/25Ghz, 1810.52e-6 para 0.4nm/50GHZ, 910.52e-6 para 0.8nm/100GHZ, 455e-6 para 1.6nm, 227e-6 para 3.2nm, 113.5e-6 para 6.4nm, 56.75e-6
+#LA INFORMACIÓN MÁS IMPORTANTE ES QUE AL MANIPULAR EL TAMAÑO DE LA CAVIDAD DISMINUYENDO SU GROSOR, LOGRAMOS REDUCIR LAS PÉRDIDAS Y AUMENTAR LA TRANSMITANCIA PERO EMPEORAMOS EL FSR
+
+#CON EL NUEVO NUEVO NUEVO DISEÑO, YA SE PERMITE HACER CAMBIOS EN EL ESPESOR DE LA CAVIDAD Y OBTENER BUEN RESULTADO 
+
+
+#NOTAS PARA MÍ MISMO, AUNQUE YA HABÍA LOGRADO UNA BUENA RESPUESTA (LA CUAL ERA SIN PÉRDIDAS, AL HACERLA CON PÉRDIDAS) TODO SE LO CONSUMIÓ EL DISPOSITIVO, ASÍ QUE QUEDABAN OTRAS OPCIONES, DISMINUIR PRIMERO LOS ÍNDICES DE REFRACCIÓN ...
+#DE LOS ESPEJOS PORQUE ME HABÍAN SALIDO MAYORES A 4, LO CUÁL ERA YA PODÍAMOS ASUMIR QUE LAS PÉRDIDAS ERAN ENORMES, ASÍ QUE TUVE QUE COMENZAR A HACER VARIACIONES EN EL ÍNDICE DE REFRACCIÓN DE LOS ESPEJOS AUMENTANDOLOS DESDE EL DISEÑO INICIAL, ESTO PORQUE AL AUMENTAR LOS ÍNDICES DE REFRACCIÓN DE LOS ESPEJOS, AUMENTABA LA REFLEXIÓN DEL DISPOSITIVO QUE ERA ALGO QUE DESEABAMOS...
+#AL LLEGAR A UN PUNTO DONDE TENÍA BUENA RESONANCIA Y UN FSR ACEPTABLE (LOS ÍNDICES DE LOS ESPEJOS YA NO SOBREPASABAN EL 4) FUE CUANDO BUSQUE LAS EQUIVALENCIAS DE LOS ÍNDICES DE REFRACCIÓN CON MATERIALES USADOS EN CAPAS DELGADAS, AMBOS DE LOS ESPEJOS SE CONSIDERAN DOPADOS, PERO EL COEFICIENTE DE ABSORCIÓN DEL PRIMER ESPEJO RESULTÓ MUY ALTO(0.008) ASÍ QUE TUVE QUE DISMINUIR SU GROSOR HACIENDO QUE LA SUMA DE AMBOS ESPEJOS SUMARA IGUALMENTE EL 1/4 DE ONDA...
+#DESPUÉS NOTÉ QUE AUNQUE REFLECTANCIA YA SUPERABA EL 90%, TODO LOS TRANSMITIDO SE QUEDABA CERCA DEL 50%, ASÍ QUE COMENCÉ A REDUCIR LA CANTIDAD DE MULTICAVIDADES (DE 5 A 3 Y LUEGO 1), ESTO CONTRIBUYÓ DEMASIADO AL DISEÑO DE DOS FORMAS, (AL DISMINUIR EL NUMERO DE MULTICAVIDADES, DISMINUÍAN LAS POÉRDIDAS Y AL QUEDAR CON 1 SOLA CAVIDAD FABRY PERÓT LOGRÉ UNIFROMIDAD PARA TODAS LAS LONGITUDES DE ONDA). CONFORME DISMINUÍ EL NUMERO DE MULTICAVIDADES TUVE QUE AUMENTAR EL TAMAÑO DE LA CAVIDAD PARA LOGRAR UN FSR MENOR, AQUÍ SURGIÓ UN NUEVO PROBLEMA, QUE EL COEFICIENTE DE ABSORCIÓN DE LA CAVIDAD RESULTABA AFECTAR DEMASIADO A LAS PÉRDIDAS DE LO TRANSMITIDO EN EL DISPOSITIVO...
+#(AUNQUE SU COEFICIENTE DE ABSORCIÓN ERA DE 0.000011, CADA CERO QUE AGREGARA AL ÍNDICE DE REFRACCIÓN LOGRABA AUMENTAR LA AMPLITUD DE LOS PULSOS TRANSMITIDOS EN UN )POR ESTO FUE QUE TUVE QUE CAMBIAR EL ÍNDICE DE REFRACCIÓN DE LA CAVIDAD(AL AUMENTARLO DE HECHO RESULTÓ DOBLEMENTE BENEFICIOSO PORQUE AUMENTÓ LA AMPLITUD DE LOS PULSOS TRANSMITIDOS Y A SU VEZ MEJORÓ EL FSR, AUNQUE TAMBIÉN TIENE UNA PEQUEÑA REPERCUSIÓN SOBRE LA AMPLITUD DE LOS PULSOS REFLEJADOS EN UN 5% POR CADA n=0.1 que aumente o disminuya) ESTO GENERÓ QUE BUSCARA UN ÍNDICE DE REFRACCIÓN MUCHO MAYOR CON UN COEFICIENTE DE EXTINCIÓN MUCHO MENOR EL CUÁL SI HALLÉ.
+
+
+#FALTA OBTENER RELACIÓN DE COMO AUMENTAR EL TAMAÑO DE LA CAVIDAD DISMINUYE EL FSR Y CUÁLES DE LOS VALORES DADOS SONN POSIBLES DE FABRICAR 
+
+# ------------------------------------------------------------
+# 7) ESPEJO M = (AB)^2
+# ------------------------------------------------------------
+mirror_n = [nA; nB; nA; nB; nA; nB; nA; nB; nA; nB; nA; nB]; # ; nA; nB
+mirror_d = [dA; dB; dA; dB; dB; dA; dB; dA; dB; dA; dB; dA]; # ; dB; dA
+
+# ------------------------------------------------------------
+# 8) CONSTRUCCION AUTOMATICA DE LA PILA
+# ------------------------------------------------------------
+# Nota:
+# si hay N cavidades, siempre hay N+1 espejos.
+# Ejemplo:
+# N = 1  -> M D M
+# N = 2  -> M D M C M
+# N = 3  -> M D M C M D M
+# etc.
+
+n = [n_in];
+d = [0];
+
+current_is_D = start_with_D;
+
+? "==============================================";
+? "INTERLEAVER MULTICAVIDAD EN STACK";
+? "num_cavities = " + num2str(num_cavities);
+? "num_mirrors  = " + num2str(num_cavities+1);
+? "pattern_mode = " + num2str(pattern_mode);
+? "==============================================";
+
+for (k=1:(num_cavities+1)) {
+
+    # Agrega un espejo M = (AB)^2
+    n = [n; mirror_n];
+    d = [d; mirror_d];
+
+    # Entre espejos, agrega una cavidad
+    if (k <= num_cavities) {
+
+        if (pattern_mode == 1) {
+            if (current_is_D == 1) {
+                n = [n; nD];
+                d = [d; dD];
+                ? "Cavidad " + num2str(k) + " = D";
+                current_is_D = 0;
+            } else {
+                n = [n; nC];
+                d = [d; dC];
+                ? "Cavidad " + num2str(k) + " = C";
+                current_is_D = 1;
+            }
+        }
+
+        if (pattern_mode == 2) {
+            n = [n; nD];
+            d = [d; dD];
+            ? "Cavidad " + num2str(k) + " = D";
+        }
+
+        if (pattern_mode == 3) {
+            n = [n; nC];
+            d = [d; dC];
+            ? "Cavidad " + num2str(k) + " = C";
+        }
+
+    }
+}
+
+# Medio de salida
+n = [n; n_out];
+d = [d; 0];
+
+# ------------------------------------------------------------
+# 9) VERIFICACION
+# ------------------------------------------------------------
+? "size(n) = ";
+? size(n);
+
+? "size(d) = ";
+? size(d);
+
+? "dA (nm) = " + num2str(dA*1e9);
+? "dB (nm) = " + num2str(dB*1e9);
+? "dC (nm) = " + num2str(dC*1e9);
+? "dD (um) = " + num2str(dD*1e6);
+
+# ------------------------------------------------------------
+# 10) STACKRT
+# ------------------------------------------------------------
+RT = stackrt(n,d,f,theta);
+
+T = pinch(RT.Ts);
+R = pinch(RT.Rs);
+A = 1 - R - T;
+
+
+# ------------------------------------------------------------
+# 11) GRAFICAS
+# ------------------------------------------------------------
+plot(lambda*1e9, T, "Longitud de onda (nm)", "T", "Transmitancia");
+legend("Ts");
+
+plot(lambda*1e9, R, "Longitud de onda (nm)", "R", "Reflectancia");
+legend("Rs");
+
+plot(lambda*1e9, A, "Longitud de onda (nm)", "A", "Absorbancia");
+legend("A");
+
+Ytr = [T,R];
+plot(lambda*1e9, Ytr, "Longitud de onda (nm)", "Fraccion de potencia", "Transmitancia y Reflectancia");
+legend("Ts","Rs");
+
+Ytra = [T,R,A];
+plot(lambda*1e9, Ytra, "Longitud de onda (nm)", "Fraccion de potencia", "T, R y A");
+legend("Ts","Rs","A");
+
+# ============================================================
+# BLOQUE EXTRA: REFLECTANCIA DEL ESPEJO INDIVIDUAL (AB)^2
+# VERSION PARA TU SCRIPT ACTUAL CON nA, nB, nC, nD
+# ============================================================
+
+num_mirrors = num_cavities + 1;
+
+Nfreq = length(f);
+
+n_mirror = matrix(6, Nfreq);
+n_mirror(1,1:Nfreq) = n_in;
+n_mirror(2,1:Nfreq) = nA;   # A = Ta2O5
+n_mirror(3,1:Nfreq) = nB;   # B = TiO2
+n_mirror(4,1:Nfreq) = nA;   # A
+n_mirror(5,1:Nfreq) = nB;   # B
+n_mirror(6,1:Nfreq) = n_out;
+
+d_mirror = [0; dA; dB; dA; dB; 0];
+
+RTm = stackrt(n_mirror, d_mirror, f, theta);
+
+Rm = pinch(RTm.Rs);
+Tm = pinch(RTm.Ts);
+Am = 1 - Rm - Tm;
+
+lambda_target_nm = 1550;
+
+idx = 1;
+err_min = abs(lambda*1e9 - lambda_target_nm);
+err_min = err_min(1);
+
+for (i=2:length(lambda)) {
+    err_i = abs(lambda(i)*1e9 - lambda_target_nm);
+    if (err_i < err_min) {
+        err_min = err_i;
+        idx = i;
+    }
+}
+
+? "==============================================";
+? "REPORTE DE ESPEJO INDIVIDUAL (AB)^2";
+? "lambda usada (nm) = " + num2str(lambda(idx)*1e9);
+? "R espejo aislado  = " + num2str(Rm(idx));
+? "T espejo aislado  = " + num2str(Tm(idx));
+? "A espejo aislado  = " + num2str(Am(idx));
+? "==============================================";
+
+for (m=1:num_mirrors) {
+    ? "Espejo " + num2str(m) + " -> R = " + num2str(Rm(idx));
+}
+
+# =========================================================
+# GRAFICAS DE TRANSMITANCIA EN ESCALA LINEAL Y EN dB
+# =========================================================
+
+# Si lambda está en metros, conviértela a um para graficar
+lambda_um = lambda*1e6;
+
+# Si T está en porcentaje, primero conviértela a fracción:
+# T = T/100;
+
+# Evitar log(0)
+eps_db = 1e-12;
+
+# Transmitancia en dB
+T_dB = 10*log10(T + eps_db);
+
+# Grafica de transmitancia lineal
+plot(lambda_um, T, "Longitud de onda (um)", "Transmitancia", "Transmitancia lineal");
+
+# Grafica de transmitancia en dB
+plot(lambda_um, T_dB, "Longitud de onda (um)", "Transmitancia (dB)", "Transmitancia en dB");
+
+R_dB = 10*log10(R + eps_db);
+A_dB = 10*log10(A + eps_db);
+
+plot(lambda_um, R_dB, "Longitud de onda (um)", "Reflectancia (dB)", "Reflectancia en dB");
+plot(lambda_um, A_dB, "Longitud de onda (um)", "Absorbancia (dB)", "Absorbancia en dB");
+
+IL_dB = -10*log10(T + eps_db);
+plot(lambda_um, IL_dB, "Longitud de onda (um)", "Pérdida de Inserción (dB)", "Perdida por Insercion");
+
+
+
+# =========================================================
+# CHEQUEO SINTONIZACIÓN 
+# =========================================================
+
+#? "s_percent (%) = " + num2str(s_percent);
+#? "s factor = " + num2str(s);
+
+#? "dA final (nm) = " + num2str(dA*1e9);
+#? "dB final (nm) = " + num2str(dB*1e9);
+#? "dC final (nm) = " + num2str(dC*1e9);
+#? "dD final (um) = " + num2str(dD*1e6);
+
+# =========================================================
+# ANCHO PASABANDA DEL PULSO TRANSMITIDO A 0.5 dB
+# Pulso cercano a 1552.524 nm
+# =========================================================
+
+lambda_target_nm = 1552.47;   # centro aproximado del pulso a medir
+bw_drop_dB = 0.5;              # ancho a 0.5 dB debajo del maximo
+search_window_nm = 0.05;       # ventana para buscar el pico cercano
+
+Npts = length(lambda);
+lambda_nm = lambda*1e9;
+
+# ---------------------------------------------------------
+# 1) Buscar el maximo local cercano a 1552.524 nm
+# ---------------------------------------------------------
+idx_peak = 1;
+Tmax_local = -1e99;
+found_window = 0;
+
+for (i=1:Npts) {
+
+    if (abs(lambda_nm(i) - lambda_target_nm) <= search_window_nm) {
+
+        found_window = 1;
+
+        if (T_dB(i) > Tmax_local) {
+            Tmax_local = T_dB(i);
+            idx_peak = i;
+        }
+    }
+}
+
+# Si por alguna razon no encuentra puntos en la ventana,
+# busca el punto mas cercano a lambda_target_nm
+if (found_window == 0) {
+
+    idx_peak = 1;
+    err_min = abs(lambda_nm(1) - lambda_target_nm);
+
+    for (i=2:Npts) {
+        err_i = abs(lambda_nm(i) - lambda_target_nm);
+
+        if (err_i < err_min) {
+            err_min = err_i;
+            idx_peak = i;
+        }
+    }
+
+    Tmax_local = T_dB(idx_peak);
+}
+
+lambda_peak_nm = lambda_nm(idx_peak);
+
+# Nivel de corte a 0.5 dB por debajo del maximo del pulso
+level_dB = Tmax_local - bw_drop_dB;
+
+# Si quisieras medir el ancho al nivel absoluto de -0.5 dB,
+# usa esta linea en vez de la anterior:
+# level_dB = -0.5;
+# ---------------------------------------------------------
+# 2) Buscar cruce izquierdo sin usar while
+# ---------------------------------------------------------
+found_left = 0;
+idx_left = idx_peak;
+
+if (idx_peak > 1) {
+
+    for (j=1:(idx_peak-1)) {
+
+        if (found_left == 0) {
+
+            i_left = idx_peak - j;
+
+            if (T_dB(i_left) <= level_dB) {
+                found_left = 1;
+                idx_left = i_left;
+            }
+        }
+    }
+}
+
+# ---------------------------------------------------------
+# 3) Buscar cruce derecho sin usar while
+# ---------------------------------------------------------
+found_right = 0;
+idx_right = idx_peak;
+
+if (idx_peak < Npts) {
+
+    for (i_right=(idx_peak+1):Npts) {
+
+        if (found_right == 0) {
+
+            if (T_dB(i_right) <= level_dB) {
+                found_right = 1;
+                idx_right = i_right;
+            }
+        }
+    }
+}
+# ---------------------------------------------------------
+# 4) Calcular lambdas exactas por interpolacion lineal
+# ---------------------------------------------------------
+if (found_left == 1) {
+
+    den_left = T_dB(idx_left+1) - T_dB(idx_left);
+
+    if (abs(den_left) > 1e-30) {
+        frac_left = (level_dB - T_dB(idx_left))/den_left;
+        lambda_left_nm = lambda_nm(idx_left) + frac_left*(lambda_nm(idx_left+1) - lambda_nm(idx_left));
+    } else {
+        lambda_left_nm = lambda_nm(idx_left);
+    }
+}
+
+if (found_right == 1) {
+
+    den_right = T_dB(idx_right) - T_dB(idx_right-1);
+
+    if (abs(den_right) > 1e-30) {
+        frac_right = (level_dB - T_dB(idx_right-1))/den_right;
+        lambda_right_nm = lambda_nm(idx_right-1) + frac_right*(lambda_nm(idx_right) - lambda_nm(idx_right-1));
+    } else {
+        lambda_right_nm = lambda_nm(idx_right);
+    }
+}
+# ---------------------------------------------------------
+# 5) Reporte final
+# ---------------------------------------------------------
+? "==============================================";
+? "ANCHO PASABANDA TRANSMITIDO A 0.5 dB";
+? "Pulso buscado cerca de = " + num2str(lambda_target_nm) + " nm";
+? "Pulso usado en calculo = " + num2str(lambda_peak_nm) + " nm";
+? "T max del pulso = " + num2str(Tmax_local) + " dB";
+? "Nivel de corte = Tmax - 0.5 dB = " + num2str(level_dB) + " dB";
+
+if (found_left == 1) {
+    ? "Lambda izquierda a 0.5 dB = " + num2str(lambda_left_nm) + " nm";
+} else {
+    ? "No se encontro cruce izquierdo. Amplia el rango lambda hacia menor longitud de onda.";
+}
+
+if (found_right == 1) {
+    ? "Lambda derecha a 0.5 dB = " + num2str(lambda_right_nm) + " nm";
+} else {
+    ? "No se encontro cruce derecho. Amplia el rango lambda hacia mayor longitud de onda.";
+}
+
+if (found_left == 1) {
+    if (found_right == 1) {
+
+        BW_nm = lambda_right_nm - lambda_left_nm;
+        BW_pm = BW_nm*1000;
+        BW_GHz = (c/(lambda_peak_nm*1e-9)^2)*(BW_nm*1e-9)/1e9;
+
+        ? "Ancho pasabanda a 0.5 dB = " + num2str(BW_nm) + " nm";
+        ? "Ancho pasabanda a 0.5 dB = " + num2str(BW_pm) + " pm";
+        ? "Ancho pasabanda aproximado = " + num2str(BW_GHz) + " GHz";
+    }
+}
+
+? "==============================================";
+
+# =========================================================
+# ANCHO DEL PULSO REFLEJADO A 0.5 dB
+# Pulso cercano a 1552.524 nm
+# =========================================================
+
+lambda_target_R_nm = 1552.524;   # centro aproximado del pulso reflejado
+bw_drop_R_dB = 0.5;              # ancho a 0.5 dB debajo del maximo reflejado
+search_window_R_nm = 0.05;       # ventana para buscar el pico reflejado cercano
+
+# ---------------------------------------------------------
+# 1) Buscar el maximo local reflejado cercano a 1552.524 nm
+# ---------------------------------------------------------
+idx_peak_R = 1;
+Rmax_local = -1e99;
+found_window_R = 0;
+
+for (i=1:Npts) {
+
+    if (abs(lambda_nm(i) - lambda_target_R_nm) <= search_window_R_nm) {
+
+        found_window_R = 1;
+
+        if (R_dB(i) > Rmax_local) {
+            Rmax_local = R_dB(i);
+            idx_peak_R = i;
+        }
+    }
+}
+
+# Si no encuentra puntos en la ventana, busca el punto mas cercano
+if (found_window_R == 0) {
+
+    idx_peak_R = 1;
+    err_min_R = abs(lambda_nm(1) - lambda_target_R_nm);
+
+    for (i=2:Npts) {
+        err_i_R = abs(lambda_nm(i) - lambda_target_R_nm);
+
+        if (err_i_R < err_min_R) {
+            err_min_R = err_i_R;
+            idx_peak_R = i;
+        }
+    }
+
+    Rmax_local = R_dB(idx_peak_R);
+}
+
+lambda_peak_R_nm = lambda_nm(idx_peak_R);
+
+# Nivel de corte reflejado a 0.5 dB debajo del maximo
+level_R_dB = Rmax_local - bw_drop_R_dB;
+
+# ---------------------------------------------------------
+# 2) Buscar cruce izquierdo reflejado sin while
+# ---------------------------------------------------------
+found_left_R = 0;
+idx_left_R = idx_peak_R;
+
+if (idx_peak_R > 1) {
+
+    for (j=1:(idx_peak_R-1)) {
+
+        if (found_left_R == 0) {
+
+            i_left_R = idx_peak_R - j;
+
+            if (R_dB(i_left_R) <= level_R_dB) {
+                found_left_R = 1;
+                idx_left_R = i_left_R;
+            }
+        }
+    }
+}
+
+# ---------------------------------------------------------
+# 3) Buscar cruce derecho reflejado sin while
+# ---------------------------------------------------------
+found_right_R = 0;
+idx_right_R = idx_peak_R;
+
+if (idx_peak_R < Npts) {
+
+    for (i_right_R=(idx_peak_R+1):Npts) {
+
+        if (found_right_R == 0) {
+
+            if (R_dB(i_right_R) <= level_R_dB) {
+                found_right_R = 1;
+                idx_right_R = i_right_R;
+            }
+        }
+    }
+}
+
+# ---------------------------------------------------------
+# 4) Interpolacion lineal para lambdas exactas reflejadas
+# ---------------------------------------------------------
+if (found_left_R == 1) {
+
+    den_left_R = R_dB(idx_left_R+1) - R_dB(idx_left_R);
+
+    if (abs(den_left_R) > 1e-30) {
+        frac_left_R = (level_R_dB - R_dB(idx_left_R))/den_left_R;
+        lambda_left_R_nm = lambda_nm(idx_left_R) + frac_left_R*(lambda_nm(idx_left_R+1) - lambda_nm(idx_left_R));
+    } else {
+        lambda_left_R_nm = lambda_nm(idx_left_R);
+    }
+}
+
+if (found_right_R == 1) {
+
+    den_right_R = R_dB(idx_right_R) - R_dB(idx_right_R-1);
+
+    if (abs(den_right_R) > 1e-30) {
+        frac_right_R = (level_R_dB - R_dB(idx_right_R-1))/den_right_R;
+        lambda_right_R_nm = lambda_nm(idx_right_R-1) + frac_right_R*(lambda_nm(idx_right_R) - lambda_nm(idx_right_R-1));
+    } else {
+        lambda_right_R_nm = lambda_nm(idx_right_R);
+    }
+}
+
+# ---------------------------------------------------------
+# 5) Reporte del ancho reflejado
+# ---------------------------------------------------------
+? "==============================================";
+? "ANCHO DEL PULSO REFLEJADO A 0.5 dB";
+? "Pulso reflejado buscado cerca de = " + num2str(lambda_target_R_nm) + " nm";
+? "Pulso reflejado usado en calculo = " + num2str(lambda_peak_R_nm) + " nm";
+? "R max del pulso = " + num2str(Rmax_local) + " dB";
+? "Nivel de corte reflejado = Rmax - 0.5 dB = " + num2str(level_R_dB) + " dB";
+
+if (found_left_R == 1) {
+    ? "Lambda izquierda reflejada a 0.5 dB = " + num2str(lambda_left_R_nm) + " nm";
+} else {
+    ? "No se encontro cruce izquierdo reflejado.";
+}
+
+if (found_right_R == 1) {
+    ? "Lambda derecha reflejada a 0.5 dB = " + num2str(lambda_right_R_nm) + " nm";
+} else {
+    ? "No se encontro cruce derecho reflejado.";
+}
+
+if (found_left_R == 1) {
+    if (found_right_R == 1) {
+
+        BW_R_nm = lambda_right_R_nm - lambda_left_R_nm;
+        BW_R_pm = BW_R_nm*1000;
+        BW_R_GHz = (c/(lambda_peak_R_nm*1e-9)^2)*(BW_R_nm*1e-9)/1e9;
+
+        ? "Ancho reflejado a 0.5 dB = " + num2str(BW_R_nm) + " nm";
+        ? "Ancho reflejado a 0.5 dB = " + num2str(BW_R_pm) + " pm";
+        ? "Ancho reflejado aproximado = " + num2str(BW_R_GHz) + " GHz";
+    }
+}
+
+? "==============================================";
+
+
+
+# ---------------------------------------------------------
+# 6) Grafica auxiliar del nivel de 0.5 dB
+# ---------------------------------------------------------
+# ---------------------------------------------------------
+# GRAFICA FINAL CON NIVELES DE 0.5 dB PARA T Y R
+# ---------------------------------------------------------
+
+level_T_vec = 0*lambda_nm + level_dB;
+level_R_vec = 0*lambda_nm + level_R_dB;
+
+# IMPORTANTE:
+# 1 = Transmitancia
+# 2 = Reflectancia
+# 3 = Nivel -0.5 dB transmitido
+# 4 = Nivel -0.5 dB reflejado
+Y_bw = [T_dB, R_dB, level_T_vec, level_R_vec];
+
+plot(lambda_nm, Y_bw,
+    "Longitud de onda (nm)",
+    "Potencia (dB)",
+    "Ancho a 0.5 dB transmitido y reflejado");
+
+legend("T_dB", "R_dB", "Nivel T -0.5 dB", "Nivel R -0.5 dB");
+
+
+
+? "Ancho pasabanda aproximado = " + num2str(BW_GHz) + " GHz";
+# ------------------------------------------------------------
+# SWITCH DE ANALISIS
+# ------------------------------------------------------------
+do_peak_count = 0;   # 1 = contar picos, 0 = NO contar picos
+if (do_peak_count == 1) {
+
+    # =========================================================
+    # CONTEO DE PULSOS TRANSMITIDOS Y REFLEJADOS SEGUN FSR
+    # Usa como referencia un pulso conocido en 1552.524 nm
+    # fsr_mode:
+    # 1 -> FSR = 0.1 nm
+    # 2 -> FSR = 0.2 nm
+    # 3 -> FSR = 0.4 nm
+    # 4 -> FSR = 0.8 nm
+    # =========================================================
+
+    fsr_mode = 1;   # <<<<<< CAMBIAR AQUI: 1, 2, 3 o 4
+
+    fsr_nm = 0.1;
+
+    if (fsr_mode == 1) {
+        fsr_nm = 0.1;
+    }
+
+    if (fsr_mode == 2) {
+        fsr_nm = 0.2;
+    }
+
+    if (fsr_mode == 3) {
+        fsr_nm = 0.4;
+    }
+
+    if (fsr_mode == 4) {
+        fsr_nm = 0.8;
+    }
+
+    lambda_ref_nm = 1552.524;
+    threshold_T_dB = -3;
+    threshold_R_dB = -3;
+
+    count_window_nm = BW_nm;
+
+    min_count_window_nm = 0.20*fsr_nm;
+
+    if (count_window_nm < min_count_window_nm) {
+        count_window_nm = min_count_window_nm;
+    }
+
+    max_count_window_nm = 0.45*fsr_nm;
+
+    if (count_window_nm > max_count_window_nm) {
+        count_window_nm = max_count_window_nm;
+    }
+
+    half_window_nm = count_window_nm/2;
+
+    R_center_offset_nm = 0;
+    # R_center_offset_nm = fsr_nm/2;
+
+    lambda_min_nm = lambda_nm(1);
+    lambda_max_nm = lambda_nm(Npts);
+
+    first_center_nm = lambda_ref_nm;
+
+    for (k=1:10000) {
+        test_center_nm = first_center_nm - fsr_nm;
+
+        if (test_center_nm >= lambda_min_nm) {
+            first_center_nm = test_center_nm;
+        } else {
+            k = 10000;
+        }
+    }
+
+    # ---------------------------------------------------------
+    # CONTEO TRANSMITIDO
+    # ---------------------------------------------------------
+    T_count = 0;
+    T_peak_lambda = matrix(Npts);
+    T_peak_value_dB = matrix(Npts);
+
+    center_nm = first_center_nm;
+
+    for (slot=1:10000) {
+
+        if (center_nm <= lambda_max_nm) {
+
+            local_max_T = -1e99;
+            local_lambda_T = center_nm;
+            found_T_slot = 0;
+
+            for (i=1:Npts) {
+
+                if (abs(lambda_nm(i) - center_nm) <= half_window_nm) {
+
+                    if (T_dB(i) > local_max_T) {
+                        local_max_T = T_dB(i);
+                        local_lambda_T = lambda_nm(i);
+                        found_T_slot = 1;
+                    }
+                }
+            }
+
+            if (found_T_slot == 1) {
+                if (local_max_T >= threshold_T_dB) {
+
+                    T_count = T_count + 1;
+                    T_peak_lambda(T_count) = local_lambda_T;
+                    T_peak_value_dB(T_count) = local_max_T;
+                }
+            }
+
+            center_nm = center_nm + fsr_nm;
+
+        } else {
+            slot = 10000;
+        }
+    }
+
+    # ---------------------------------------------------------
+    # CONTEO REFLEJADO
+    # ---------------------------------------------------------
+    R_count = 0;
+    R_peak_lambda = matrix(Npts);
+    R_peak_value_dB = matrix(Npts);
+
+    center_R_nm = first_center_nm + R_center_offset_nm;
+
+    if (center_R_nm < lambda_min_nm) {
+        center_R_nm = center_R_nm + fsr_nm;
+    }
+
+    for (slot=1:10000) {
+
+        if (center_R_nm <= lambda_max_nm) {
+
+            local_max_R = -1e99;
+            local_lambda_R = center_R_nm;
+            found_R_slot = 0;
+
+            for (i=1:Npts) {
+
+                if (abs(lambda_nm(i) - center_R_nm) <= half_window_nm) {
+
+                    if (R_dB(i) > local_max_R) {
+                        local_max_R = R_dB(i);
+                        local_lambda_R = lambda_nm(i);
+                        found_R_slot = 1;
+                    }
+                }
+            }
+
+            if (found_R_slot == 1) {
+                if (local_max_R >= threshold_R_dB) {
+
+                    R_count = R_count + 1;
+                    R_peak_lambda(R_count) = local_lambda_R;
+                    R_peak_value_dB(R_count) = local_max_R;
+                }
+            }
+
+            center_R_nm = center_R_nm + fsr_nm;
+
+        } else {
+            slot = 10000;
+        }
+    }
+
+    # ---------------------------------------------------------
+    # REPORTE FINAL
+    # ---------------------------------------------------------
+    ? "==============================================";
+    ? "CONTEO DE PULSOS SEGUN FSR";
+    ? "fsr_mode = " + num2str(fsr_mode);
+    ? "FSR usado = " + num2str(fsr_nm) + " nm";
+    ? "Pulso de referencia = " + num2str(lambda_ref_nm) + " nm";
+    ? "Ancho pasabanda usado para conteo = " + num2str(count_window_nm) + " nm";
+    ? "Half-window usado = " + num2str(half_window_nm) + " nm";
+    ? "Umbral T = " + num2str(threshold_T_dB) + " dB";
+    ? "Umbral R = " + num2str(threshold_R_dB) + " dB";
+    ? "Offset centros R = " + num2str(R_center_offset_nm) + " nm";
+    ? "==============================================";
+
+    ? "Numero de pulsos transmitidos = " + num2str(T_count);
+    ? "Pulsos transmitidos encontrados:";
+
+    for (j=1:T_count) {
+        ? "T pico " + num2str(j) +
+          " | lambda = " + num2str(T_peak_lambda(j)) + " nm" +
+          " | T = " + num2str(T_peak_value_dB(j)) + " dB";
+    }
+
+    ? "----------------------------------------------";
+
+    ? "Numero de pulsos reflejados = " + num2str(R_count);
+    ? "Pulsos reflejados encontrados:";
+
+    for (j=1:R_count) {
+        ? "R pico " + num2str(j) +
+          " | lambda = " + num2str(R_peak_lambda(j)) + " nm" +
+          " | R = " + num2str(R_peak_value_dB(j)) + " dB";
+    }
+
+    ? "==============================================";
+
+} else {
+
+    ? "==============================================";
+    ? "CONTEO DE PICOS DESACTIVADO";
+    ? "Para activar el conteo cambia:";
+    ? "do_peak_count = 1";
+    ? "==============================================";
+}
+
+# ============================================================
+# PDL CORREGIDO PARA STACKRT
+# ============================================================
+
+Ts_PDL = pinch(RT.Ts);
+Tp_PDL = pinch(RT.Tp);
+
+T_floor = 1e-15;
+
+# Evitar log10(0)
+for (i=1:length(Ts_PDL)) {
+
+    if (Ts_PDL(i) < T_floor) {
+        Ts_PDL(i) = T_floor;
+    }
+
+    if (Tp_PDL(i) < T_floor) {
+        Tp_PDL(i) = T_floor;
+    }
+}
+
+IL_s_dB = -10*log10(Ts_PDL);
+IL_p_dB = -10*log10(Tp_PDL);
+
+PDL_dB = abs(IL_s_dB - IL_p_dB);
+PDL_max = max(PDL_dB);
+
+plot(lambda*1e9, PDL_dB,
+     "Wavelength (nm)",
+     "PDL (dB)",
+     "Polarization Dependent Loss");
+
+? "==============================================";
+? "REPORTE PDL";
+? "Maximum PDL = " + num2str(PDL_max) + " dB";
+? "==============================================";
