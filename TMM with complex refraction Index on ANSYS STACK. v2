@@ -15,7 +15,7 @@ clear;
 # 1) CONFIGURACION GENERAL
 # ------------------------------------------------------------
 lambda0 = 1550e-9;
-lambda  = linspace(1514.4e-9,1584.8e-9,100001);
+lambda  = linspace(1550.4e-9,1554.8e-9,100001);
 f       = c/lambda;
 theta   = 0;
 
@@ -52,15 +52,15 @@ ii = sqrt(-1);
 # 4) INDICES DE REFRACCION
 # ------------------------------------------------------------
 if (use_loss == 1) {
-    nA = 2.0436 + ii*2.32e-29;    # Ta2O5 #0.2             NUEVO InGaAsP n=3.2515,k=0.00806       SiN no estequiométrico 2.01
-    nB = 2.2 + ii*5.87e-45;      # TiO2   2.857   2.21      NUEVO GaAs   n=3.3684,k=0.0000001    2.875   SCHOTT IRG 23: 2.8589 PERO NO INCLUYE K,  SCHOTT IRG 26:2.84+ii*5.1737e-7
-    nC = 1 + ii*0;       #1.4e-9 Si                 SE QUEDÓ IGUAL
-    nD = 1 + ii*0;  # SiO2               NUEVO Al2O3  n=1.6345,k=3.0113e-317
+    nA = 2.0436 + ii*2.32e-29;      # Ta2O5 
+    nB = 2.8436 + ii*5.87e-45;      # TiO2   
+    nC = 1 + ii*0;               
+    nD = 1 + ii*0;  
 } else {
-nA = 2.0573;   #0.2,   aunque aumentar el índice de los espejos aumenta la amplitud reflejada, en ciertos intervalos se pierde la simetría
+nA = 2.0573;   #0.2,
    nB = 2.2808; 
     nC = 1; 
-    nD = 1.444;   #nD inversamente proporcional a la magnitud del pulso reflejado
+    nD = 1.444;  
 }
 
 
@@ -82,32 +82,19 @@ n_out = 1.0;
 # ------------------------------------------------------------
 # A y B: cuarto de onda a 1550 nm
 
-dA = 387.5e-9;   #  100+287.5=387.5nm*2=  750nm          MIENTRAS LAS SUMAS DE AMBOS ESPEJOS DEN 1/4 Ó 1/2 DE LAMBDA TODO BIEN, TAMBIÉN EL GROSOR DE LOS ESPEJOS AFECTA EL FSR
-dB = 387.5e-9;   #  750nm       CHECAR SI ESTOS ESPESORES SON FABRICABLES
+dA = 189.71e-9;   
+dB = 136.32e-9;   
 
 # ENCONTRADOS POR BARRIDOS
-dC = 202e-9;    # 137 nm , 112.84nm, ,124nm  155 el tamaño de la capa C afecta proporcioanlmente la amplitud de como se reflectan los pulsos, y al igual que el índice de los reflectores, al aumentarlo mucho pierden simetría 
-dD =  12007.5e-6;   #8496.47e-6, 11.99e-3/2/2/2/2 para 1.6,  156.18 um , 1038.52 um logramos reducir el fsr proporcionalmente con el tamaño de la cavidad pero tamb 
-#5566.52, 7166.52e-6 para 0.1nm/12.5Ghz, 3666.52e-6 para 0.2nm/25Ghz, 1810.52e-6 para 0.4nm/50GHZ, 910.52e-6 para 0.8nm/100GHZ, 455e-6 para 1.6nm, 227e-6 para 3.2nm, 113.5e-6 para 6.4nm, 56.75e-6
-#LA INFORMACIÓN MÁS IMPORTANTE ES QUE AL MANIPULAR EL TAMAÑO DE LA CAVIDAD DISMINUYENDO SU GROSOR, LOGRAMOS REDUCIR LAS PÉRDIDAS Y AUMENTAR LA TRANSMITANCIA PERO EMPEORAMOS EL FSR
+dC = 202e-9;    
+dD = 12007.5e-6;   
 
-#CON EL NUEVO NUEVO NUEVO DISEÑO, YA SE PERMITE HACER CAMBIOS EN EL ESPESOR DE LA CAVIDAD Y OBTENER BUEN RESULTADO 
-
-
-#NOTAS PARA MÍ MISMO, AUNQUE YA HABÍA LOGRADO UNA BUENA RESPUESTA (LA CUAL ERA SIN PÉRDIDAS, AL HACERLA CON PÉRDIDAS) TODO SE LO CONSUMIÓ EL DISPOSITIVO, ASÍ QUE QUEDABAN OTRAS OPCIONES, DISMINUIR PRIMERO LOS ÍNDICES DE REFRACCIÓN ...
-#DE LOS ESPEJOS PORQUE ME HABÍAN SALIDO MAYORES A 4, LO CUÁL ERA YA PODÍAMOS ASUMIR QUE LAS PÉRDIDAS ERAN ENORMES, ASÍ QUE TUVE QUE COMENZAR A HACER VARIACIONES EN EL ÍNDICE DE REFRACCIÓN DE LOS ESPEJOS AUMENTANDOLOS DESDE EL DISEÑO INICIAL, ESTO PORQUE AL AUMENTAR LOS ÍNDICES DE REFRACCIÓN DE LOS ESPEJOS, AUMENTABA LA REFLEXIÓN DEL DISPOSITIVO QUE ERA ALGO QUE DESEABAMOS...
-#AL LLEGAR A UN PUNTO DONDE TENÍA BUENA RESONANCIA Y UN FSR ACEPTABLE (LOS ÍNDICES DE LOS ESPEJOS YA NO SOBREPASABAN EL 4) FUE CUANDO BUSQUE LAS EQUIVALENCIAS DE LOS ÍNDICES DE REFRACCIÓN CON MATERIALES USADOS EN CAPAS DELGADAS, AMBOS DE LOS ESPEJOS SE CONSIDERAN DOPADOS, PERO EL COEFICIENTE DE ABSORCIÓN DEL PRIMER ESPEJO RESULTÓ MUY ALTO(0.008) ASÍ QUE TUVE QUE DISMINUIR SU GROSOR HACIENDO QUE LA SUMA DE AMBOS ESPEJOS SUMARA IGUALMENTE EL 1/4 DE ONDA...
-#DESPUÉS NOTÉ QUE AUNQUE REFLECTANCIA YA SUPERABA EL 90%, TODO LOS TRANSMITIDO SE QUEDABA CERCA DEL 50%, ASÍ QUE COMENCÉ A REDUCIR LA CANTIDAD DE MULTICAVIDADES (DE 5 A 3 Y LUEGO 1), ESTO CONTRIBUYÓ DEMASIADO AL DISEÑO DE DOS FORMAS, (AL DISMINUIR EL NUMERO DE MULTICAVIDADES, DISMINUÍAN LAS POÉRDIDAS Y AL QUEDAR CON 1 SOLA CAVIDAD FABRY PERÓT LOGRÉ UNIFROMIDAD PARA TODAS LAS LONGITUDES DE ONDA). CONFORME DISMINUÍ EL NUMERO DE MULTICAVIDADES TUVE QUE AUMENTAR EL TAMAÑO DE LA CAVIDAD PARA LOGRAR UN FSR MENOR, AQUÍ SURGIÓ UN NUEVO PROBLEMA, QUE EL COEFICIENTE DE ABSORCIÓN DE LA CAVIDAD RESULTABA AFECTAR DEMASIADO A LAS PÉRDIDAS DE LO TRANSMITIDO EN EL DISPOSITIVO...
-#(AUNQUE SU COEFICIENTE DE ABSORCIÓN ERA DE 0.000011, CADA CERO QUE AGREGARA AL ÍNDICE DE REFRACCIÓN LOGRABA AUMENTAR LA AMPLITUD DE LOS PULSOS TRANSMITIDOS EN UN )POR ESTO FUE QUE TUVE QUE CAMBIAR EL ÍNDICE DE REFRACCIÓN DE LA CAVIDAD(AL AUMENTARLO DE HECHO RESULTÓ DOBLEMENTE BENEFICIOSO PORQUE AUMENTÓ LA AMPLITUD DE LOS PULSOS TRANSMITIDOS Y A SU VEZ MEJORÓ EL FSR, AUNQUE TAMBIÉN TIENE UNA PEQUEÑA REPERCUSIÓN SOBRE LA AMPLITUD DE LOS PULSOS REFLEJADOS EN UN 5% POR CADA n=0.1 que aumente o disminuya) ESTO GENERÓ QUE BUSCARA UN ÍNDICE DE REFRACCIÓN MUCHO MAYOR CON UN COEFICIENTE DE EXTINCIÓN MUCHO MENOR EL CUÁL SI HALLÉ.
-
-
-#FALTA OBTENER RELACIÓN DE COMO AUMENTAR EL TAMAÑO DE LA CAVIDAD DISMINUYE EL FSR Y CUÁLES DE LOS VALORES DADOS SONN POSIBLES DE FABRICAR 
 
 # ------------------------------------------------------------
 # 7) ESPEJO M = (AB)^2
 # ------------------------------------------------------------
-mirror_n = [nA; nB; nA; nB; nA; nB; nA; nB; nA; nB; nA; nB]; # ; nA; nB
-mirror_d = [dA; dB; dA; dB; dB; dA; dB; dA; dB; dA; dB; dA]; # ; dB; dA
+mirror_n = [nA; nB; nA; nB; nA; nB; nA; nB]; # ; nA; nB
+mirror_d = [dA; dB; dA; dB; dA; dB; dA; dB]; # ; dB; dA
 
 # ------------------------------------------------------------
 # 8) CONSTRUCCION AUTOMATICA DE LA PILA
@@ -218,56 +205,153 @@ Ytra = [T,R,A];
 plot(lambda*1e9, Ytra, "Longitud de onda (nm)", "Fraccion de potencia", "T, R y A");
 legend("Ts","Rs","A");
 
+
 # ============================================================
-# BLOQUE EXTRA: REFLECTANCIA DEL ESPEJO INDIVIDUAL (AB)^2
-# VERSION PARA TU SCRIPT ACTUAL CON nA, nB, nC, nD
+# BLOQUE EXTRA: REFLECTANCIA DEL ESPEJO INDIVIDUAL
+# VERSION AUTOMATICA PARA EL SCRIPT MULTICAVIDAD
+#
+# El espejo se construye utilizando mirror_n y mirror_d
+# definidos previamente en el codigo principal.
+#
+# Estructura actual: M = (AB)^4
 # ============================================================
+
+# ------------------------------------------------------------
+# 1) CONFIGURACION DEL ESPEJO
+# ------------------------------------------------------------
 
 num_mirrors = num_cavities + 1;
 
-Nfreq = length(f);
+# Cantidad de capas del espejo
+num_layers_mirror = length(mirror_d);
 
-n_mirror = matrix(6, Nfreq);
-n_mirror(1,1:Nfreq) = n_in;
-n_mirror(2,1:Nfreq) = nA;   # A = Ta2O5
-n_mirror(3,1:Nfreq) = nB;   # B = TiO2
-n_mirror(4,1:Nfreq) = nA;   # A
-n_mirror(5,1:Nfreq) = nB;   # B
-n_mirror(6,1:Nfreq) = n_out;
+# Cantidad de pares AB
+num_pairs_mirror = num_layers_mirror/2;
 
-d_mirror = [0; dA; dB; dA; dB; 0];
+# ------------------------------------------------------------
+# 2) CONSTRUCCION DEL ESPEJO INDIVIDUAL
+# ------------------------------------------------------------
+
+# Se utilizan los mismos indices complejos y espesores
+# que en los espejos de la estructura multicavidad.
+
+# Medio incidente + espejo + medio de salida
+n_mirror = [n_in; mirror_n; n_out];
+
+# Espesores correspondientes
+d_mirror = [0; mirror_d; 0];
+
+# ------------------------------------------------------------
+# 3) CALCULO MEDIANTE STACKRT
+# ------------------------------------------------------------
 
 RTm = stackrt(n_mirror, d_mirror, f, theta);
 
+# Reflectancia y transmitancia, polarizacion S
 Rm = pinch(RTm.Rs);
 Tm = pinch(RTm.Ts);
+
+# Absortancia
 Am = 1 - Rm - Tm;
+
+# ------------------------------------------------------------
+# 4) LONGITUD DE ONDA DE EVALUACION
+# ------------------------------------------------------------
 
 lambda_target_nm = 1550;
 
+# Buscar el punto mas cercano a lambda_target_nm
 idx = 1;
-err_min = abs(lambda*1e9 - lambda_target_nm);
-err_min = err_min(1);
+
+err_min = abs(lambda(1)*1e9 - lambda_target_nm);
 
 for (i=2:length(lambda)) {
+
     err_i = abs(lambda(i)*1e9 - lambda_target_nm);
+
     if (err_i < err_min) {
+
         err_min = err_i;
         idx = i;
+
     }
 }
 
+# ------------------------------------------------------------
+# 5) REPORTE DEL ESPEJO INDIVIDUAL
+# ------------------------------------------------------------
+
 ? "==============================================";
-? "REPORTE DE ESPEJO INDIVIDUAL (AB)^2";
-? "lambda usada (nm) = " + num2str(lambda(idx)*1e9);
-? "R espejo aislado  = " + num2str(Rm(idx));
-? "T espejo aislado  = " + num2str(Tm(idx));
-? "A espejo aislado  = " + num2str(Am(idx));
+? "REPORTE DE ESPEJO INDIVIDUAL";
 ? "==============================================";
 
+? "Numero de pares AB = " + num2str(num_pairs_mirror);
+? "Numero de capas = " + num2str(num_layers_mirror);
+
+? "Numero de espejos = " + num2str(num_mirrors);
+
+? "Longitud de onda objetivo (nm) = " + num2str(lambda_target_nm);
+
+? "Longitud de onda utilizada (nm) = " + num2str(lambda(idx)*1e9);
+
+? "----------------------------------------------";
+
+? "R espejo aislado = " + num2str(Rm(idx));
+
+? "T espejo aislado = " + num2str(Tm(idx));
+
+? "A espejo aislado = " + num2str(Am(idx));
+
+? "----------------------------------------------";
+
+? "Reflectancia (%) = " + num2str(Rm(idx)*100);
+
+? "Transmitancia (%) = " + num2str(Tm(idx)*100);
+
+? "Absortancia (%) = " + num2str(Am(idx)*100);
+
+? "==============================================";
+
+# ------------------------------------------------------------
+# 6) REPORTE DE LOS ESPEJOS DEL DISENO
+# ------------------------------------------------------------
+
+# Todos los espejos tienen la misma estructura AB.
+# Se reporta la respuesta de cada espejo aislado
+# entre los mismos medios externos.
+
 for (m=1:num_mirrors) {
-    ? "Espejo " + num2str(m) + " -> R = " + num2str(Rm(idx));
+
+    ? "Espejo " + num2str(m) +
+      " -> R aislada = " + num2str(Rm(idx));
+
 }
+
+# ------------------------------------------------------------
+# 7) GRAFICAS DEL ESPEJO INDIVIDUAL
+# ------------------------------------------------------------
+
+# Reflectancia
+plot(lambda*1e9, Rm,
+     "Longitud de onda (nm)",
+     "Reflectancia",
+     "Reflectancia del espejo individual");
+
+# Transmitancia
+plot(lambda*1e9, Tm,
+     "Longitud de onda (nm)",
+     "Transmitancia",
+     "Transmitancia del espejo individual");
+
+# Reflectancia, transmitancia y absortancia
+Y_mirror = [Rm,Tm,Am];
+
+plot(lambda*1e9, Y_mirror,
+     "Longitud de onda (nm)",
+     "Fraccion de potencia",
+     "R, T y A del espejo individual");
+
+legend("Rs","Ts","A");
 
 # =========================================================
 # GRAFICAS DE TRANSMITANCIA EN ESCALA LINEAL Y EN dB
